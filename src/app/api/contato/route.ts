@@ -10,9 +10,14 @@ const LIMITES = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+const RESEND_URL = "https://api.resend.com/emails";
+const DESTINO = "tonarqjcl@gmail.com";
+/** O remetente resend.dev só entrega para o e-mail dono da conta Resend. */
+const REMETENTE = "Site Tonarq <onboarding@resend.dev>";
+
 /**
- * Rota padrão do formulário. Valida e registra; não integra com serviço
- * externo enquanto o endpoint definitivo não estiver definido em site.ts.
+ * Rota padrão do formulário. Valida e encaminha por e-mail via Resend;
+ * exige RESEND_API_KEY no ambiente.
  */
 export async function POST(request: Request) {
   let payload: Record<string, unknown>;
@@ -51,6 +56,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ erro: "campos inválidos", erros }, { status: 422 });
   }
 
-  console.info("[contato] novo envio", { empresa, email });
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.error("[contato] RESEND_API_KEY não configurada");
+    return NextResponse.json({ erro: "envio indisponível" }, { status: 503 });
+  }
+
+  const telefone = texto("telefone");
+  const corpo = [
+    `Nome: ${nome}`,
+    `Empresa: ${empresa}`,
+    `E-mail: ${email}`,
+    `Telefone: ${telefone || "não informado"}`,
+    "",
+    descricao,
+  ].join("\n");
+
+  let resposta: Response;
+  try {
+    resposta = await fetch(RESEND_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: REMETENTE,
+        to: [DESTINO],
+        reply_to: email,
+        subject: `Contato pelo site: ${empresa}`.replace(/[\r\n]+/g, " "),
+        text: corpo,
+      }),
+    });
+  } catch (erro) {
+    console.error("[contato] falha de rede no envio", erro);
+    return NextResponse.json({ erro: "falha no envio" }, { status: 502 });
+  }
+
+  if (!resposta.ok) {
+    console.error("[contato] Resend recusou o envio", resposta.status, await resposta.text());
+    return NextResponse.json({ erro: "falha no envio" }, { status: 502 });
+  }
+
   return NextResponse.json({ ok: true });
 }
