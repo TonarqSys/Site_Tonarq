@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #03040a;
+  --surface: #080b14;
+  --cyan: #5cf6ff;
+  --blue: #3478ff;
+  --violet: #8b5cf6;
+  --magenta: #ff4fd8;
+  --text: #f7f8fc;
+  --muted: #9ba4b7;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-cyan: var(--cyan);
+  --color-blue: var(--blue);
+  --color-violet: var(--violet);
+  --color-magenta: var(--magenta);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-space-grotesk);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* A narrativa é escura por definição; não há variante clara. */
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* Nenhuma seção pode empurrar a página para os lados. */
+  overflow-x: hidden;
+
+  background-color: var(--bg);
+}
+
+/* Atmosfera permanente em camada fixa propria: compoe na GPU e nao
+   dispara repaint no scroll, ao contrario de background-attachment: fixed.
+   Onde as particulas nao alcancam, o fundo nao vira preto chapado. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1200px 900px at 50% -8%, rgba(52, 120, 255, 0.13), transparent 62%),
+    radial-gradient(900px 780px at 88% 26%, rgba(139, 92, 246, 0.1), transparent 60%),
+    radial-gradient(1100px 950px at 8% 72%, rgba(92, 246, 255, 0.075), transparent 62%),
+    radial-gradient(800px 700px at 62% 104%, rgba(255, 79, 216, 0.05), transparent 60%);
+}
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.font-display {
+  font-family: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
+}
+
+/* Legibilidade sobre o campo de partículas, sem caixa opaca por cima. */
+.readable {
+  text-shadow: 0 2px 24px rgba(3, 4, 10, 0.85), 0 1px 4px rgba(3, 4, 10, 0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Texto da pagina nao e selecionavel; so os campos do formulario aceitam selecao. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select {
+  -webkit-user-select: text;
+  user-select: text;
+}
